@@ -1,11 +1,9 @@
 import * as fs from "fs";
-import * as path from "path";
+import {Template} from "./Template";
 
-class FileSearch {
-  private dirName: string;
-  private fileRegExp: RegExp;
+class FileSearch extends Template {
+
   private searchRegExp: RegExp;
-  private recurse: boolean;
 
   private totalMatches: number = 0;
 
@@ -45,53 +43,18 @@ class FileSearch {
     searchPattern: string,
     recurse: boolean = false
   ) {
-    this.dirName = dirName;
-    this.fileRegExp = new RegExp(filePattern);
+    super(dirName, filePattern, recurse);
     this.searchRegExp = new RegExp(searchPattern);
-    this.recurse = recurse;
   }
 
   private async run() {
-    await this.searchDirectory(this.dirName);
+    await this.templateMethod(this.dirName);
     console.log();
     console.log(`TOTAL MATCHES: ${this.totalMatches}`);
   }
 
-  private async searchDirectory(filePath: string) {
-    if (!this.isDirectory(filePath)) {
-      this.nonDirectory(filePath);
-      return;
-    }
 
-    if (!this.isReadable(filePath)) {
-      this.unreadableDirectory(filePath);
-      return;
-    }
-
-    const files = fs.readdirSync(filePath);
-
-    for (let file of files) {
-      const fullPath = path.join(filePath, file);
-      if (this.isFile(fullPath)) {
-        if (this.isReadable(fullPath)) {
-          await this.searchFile(fullPath);
-        } else {
-          this.unreadableFile(fullPath);
-        }
-      }
-    }
-
-    if (this.recurse) {
-      for (let file of files) {
-        const fullPath = path.join(filePath, file);
-        if (this.isDirectory(fullPath)) {
-          await this.searchDirectory(fullPath);
-        }
-      }
-    }
-  }
-
-  private async searchFile(filePath: string) {
+  override async countAndSearch(filePath: string) { //searchFile
     let currentMatchCount = 0;
 
     if (this.fileRegExp.test(filePath)) {
@@ -121,39 +84,6 @@ class FileSearch {
         }
       }
     }
-  }
-
-  private isDirectory(path: string): boolean {
-    try {
-      return fs.statSync(path).isDirectory();
-    } catch (error) {
-      return false;
-    }
-  }
-
-  private isFile(path: string): boolean {
-    try {
-      return fs.statSync(path).isFile();
-    } catch (error) {
-      return false;
-    }
-  }
-
-  private isReadable(path: string): boolean {
-    try {
-      fs.accessSync(path, fs.constants.R_OK);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  private nonDirectory(dirName: string): void {
-    console.log(`${dirName} is not a directory`);
-  }
-
-  private unreadableDirectory(dirName: string): void {
-    console.log(`Directory ${dirName} is unreadable`);
   }
 
   private unreadableFile(fileName: string): void {

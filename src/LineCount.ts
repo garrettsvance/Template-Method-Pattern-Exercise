@@ -1,10 +1,7 @@
 import * as fs from "fs";
-import * as path from "path";
+import {Template} from "./Template";
 
-class LineCount {
-  private dirName: string;
-  private fileRegExp: RegExp;
-  private recurse: boolean;
+class LineCount extends Template {
 
   private totalLineCount: number = 0;
 
@@ -34,45 +31,15 @@ class LineCount {
     filePattern: string,
     recurse: boolean = false
   ) {
-    this.dirName = dirName;
-    this.fileRegExp = new RegExp(filePattern);
-    this.recurse = recurse;
+    super(dirName, filePattern, recurse);
   }
 
   private async run() {
-    await this.countLinesInDirectory(this.dirName);
+    await this.templateMethod(this.dirName);
     console.log(`TOTAL: ${this.totalLineCount}`);
   }
 
-  private async countLinesInDirectory(filePath: string) {
-    if (this.isDirectory(filePath)) {
-      if (this.isReadable(filePath)) {
-        const files = fs.readdirSync(filePath);
-
-        for (let file of files) {
-          const fullPath = path.join(filePath, file);
-          if (this.isFile(fullPath)) {
-            if (this.isReadable(fullPath)) {
-              await this.countLinesInFile(fullPath);
-            } else {
-              console.log(`File ${fullPath} is unreadable`);
-            }
-          }
-        }
-
-        if (this.recurse) {
-          for (let file of files) {
-            const fullPath = path.join(filePath, file);
-            if (this.isDirectory(fullPath)) {
-              await this.countLinesInDirectory(fullPath);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private async countLinesInFile(filePath: string) {
+  override async countAndSearch(filePath: string) { //countLinesinFile
     if (this.fileRegExp.test(filePath)) {
       let currentLineCount = 0;
 
@@ -93,30 +60,6 @@ class LineCount {
     }
   }
 
-  private isDirectory(path: string): boolean {
-    try {
-      return fs.statSync(path).isDirectory();
-    } catch (error) {
-      return false;
-    }
-  }
-
-  private isFile(path: string): boolean {
-    try {
-      return fs.statSync(path).isFile();
-    } catch (error) {
-      return false;
-    }
-  }
-
-  private isReadable(path: string): boolean {
-    try {
-      fs.accessSync(path, fs.constants.R_OK);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
 }
 
 LineCount.main();
