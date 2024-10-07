@@ -25,7 +25,7 @@ export abstract class Template {
                     const fullPath = path.join(filePath, file);
                     if (this.isFile(fullPath)) {
                         if (this.isReadable(fullPath)) {
-                            await this.countAndSearch(filePath); //countlinesinfile
+                            await this.countAndSearch(fullPath); //countlinesinfile
                         } else {
                             console.log(`File ${fullPath} is unreadable`);
                         }
